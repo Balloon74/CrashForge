@@ -53,6 +53,12 @@ fn runs_minimizes_stores_and_reproduces_a_c_crash() {
         String::from_utf8_lossy(&run.stderr)
     );
     let output = String::from_utf8_lossy(&run.stdout);
+    for marker in ["CrashForge", "Confidence:", "executions", "Saved:"] {
+        assert!(
+            output.contains(marker),
+            "missing {marker} in output: {output}"
+        );
+    }
     let id = output
         .lines()
         .find_map(|line| line.strip_prefix("Fingerprint: "))
@@ -62,6 +68,18 @@ fn runs_minimizes_stores_and_reproduces_a_c_crash() {
     let case = workspace.path().join(".crashforge/crashes").join(&id);
     let minimized = fs::read(case.join("minimized.txt")).unwrap();
     assert!(minimized.len() < contents.len());
+    let manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(case.join("crash.json")).unwrap()).unwrap();
+    assert_eq!(
+        manifest["original_size"],
+        manifest["stats"]["original_size"]
+    );
+    assert_eq!(
+        manifest["minimized_size"],
+        manifest["stats"]["minimized_size"]
+    );
+    assert!(manifest["stats"]["minimization_runs"].as_u64().unwrap() > 0);
+    assert!(manifest["stats"]["minimization_ms"].is_number());
 
     for arguments in [
         vec!["reproduce".into(), id.clone()],

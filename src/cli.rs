@@ -1,9 +1,11 @@
-use crate::crash::{classify, kind_name, CrashKind, FingerprintStrength};
+use crate::crash::{classify, kind_name, CrashKind, FingerprintConfidence};
 use crate::error::{message, CrashForgeError, Result};
 use crate::fingerprint::fingerprint;
 use crate::minimizer::{minimize, MinimizerLimits};
 use crate::runner::{run as run_target, RunOptions, Target};
-use crate::storage::{case_directory, list_cases, load_case, save_case, CrashManifest, MinimizationStats};
+use crate::storage::{
+    case_directory, list_cases, load_case, save_case, CrashManifest, MinimizationStats,
+};
 use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -89,13 +91,17 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
     })?;
     let baseline_fingerprint = fingerprint(&baseline_observation);
 
-    println!("CrashForge\n");
+    println!("CrashForge 0.2\n");
     println!(
-        "Crash detected: {}",
+        "✓ Crash detected: {}",
         describe_crash(&baseline_observation.kind)
     );
-    println!("Fingerprint: {baseline_fingerprint}\n");
-    println!("Minimizing...");
+    println!("Fingerprint: {baseline_fingerprint}");
+    println!(
+        "  Confidence: {}",
+        confidence_name(baseline_observation.confidence)
+    );
+    println!("→ Minimizing");
 
     let candidate_directory = tempdir()?;
     let candidate_path = candidate_directory.path().join("candidate.input");
@@ -105,6 +111,7 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
         working_dir: working_directory.clone(),
     };
     let mut predicate_error = None;
+    let minimization_started = std::time::Instant::now();
     let result = minimize(
         &original,
         MinimizerLimits {
@@ -126,6 +133,7 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
             }
         },
     );
+    debug_assert!(minimization_started.elapsed() >= result.elapsed);
     if let Some(error) = predicate_error {
         return Err(error);
     }
@@ -143,35 +151,44 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
         )));
     }
 
-    println!("{} bytes → {} bytes", original.len(), result.bytes.len());
-    if !result.complete {
-        println!("Minimization stopped after {} candidate runs.", result.runs);
-    }
+    let reduction_percent = if original.is_empty() {
+        0.0
+    } else {
+        100.0 * (original.len() - result.bytes.len()) as f64 / original.len() as f64
+    };
+    let stats = MinimizationStats {
+        original_size: original.len(),
+        minimized_size: result.bytes.len(),
+        reduction_percent,
+        minimization_runs: result.runs,
+        minimization_ms: result.elapsed.as_millis().try_into().unwrap_or(u64::MAX),
+    };
+
     println!(
-        "\nVerified:\n{}-byte input reproduces {baseline_fingerprint}",
-        result.bytes.len()
+        "  {} B → {} B · {} executions · {} ms · {:.3}% reduction",
+        stats.original_size,
+        stats.minimized_size,
+        stats.minimization_runs,
+        stats.minimization_ms,
+        stats.reduction_percent
     );
+    if !result.complete {
+        println!(
+            "  Minimization incomplete: candidate-run budget exhausted after {} executions.",
+            stats.minimization_runs
+        );
+    }
+    println!("✓ Verified: {baseline_fingerprint}");
 
     let manifest = CrashManifest {
         id: baseline_fingerprint,
         signal: signal_for(&baseline_observation.kind),
         crash_kind: kind_name(&baseline_observation.kind).into(),
-        fingerprint_strength: strength_name(baseline_observation.strength).into(),
-        original_size: original.len(),
-        minimized_size: result.bytes.len(),
-        stats: MinimizationStats {
-            original_size: original.len(),
-            minimized_size: result.bytes.len(),
-            reduction_percent: if original.is_empty() {
-                0.0
-            } else {
-                (original.len().saturating_sub(result.bytes.len()) as f64 / original.len() as f64)
-                    * 100.0
-            },
-            minimization_runs: result.runs,
-            minimization_ms: result.elapsed.as_millis().try_into().unwrap_or(u64::MAX),
-        },
-        fingerprint_confidence: Some(format!("{:?}", baseline_observation.confidence)),
+        fingerprint_strength: confidence_name(baseline_observation.confidence).into(),
+        original_size: stats.original_size,
+        minimized_size: stats.minimized_size,
+        stats,
+        fingerprint_confidence: Some(confidence_name(baseline_observation.confidence).into()),
         program: candidate_target.program,
         working_directory,
         timeout_ms,
@@ -179,9 +196,9 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
     };
     let root = storage_root()?;
     match save_case(&root, &manifest, &original, &result.bytes) {
-        Ok(path) => println!("\nSaved:\n{}", path.display()),
+        Ok(path) => println!("✓ Saved: {}", path.display()),
         Err(CrashForgeError::Collision(path)) => {
-            println!("\nAlready stored:\n{}", path.display())
+            println!("Already stored: {}", path.display())
         }
         Err(error) => return Err(error),
     }
@@ -254,11 +271,16 @@ fn list_command() -> Result<()> {
         println!("No stored crashes.");
         return Ok(());
     }
-    println!("ID           Kind          Original   Minimized");
+    println!("ID           Kind          Original   Minimized   Reduction    Runs");
     for case in cases {
         println!(
-            "{:<12} {:<13} {:>8}   {:>9}",
-            case.id, case.crash_kind, case.original_size, case.minimized_size
+            "{:<12} {:<13} {:>8}   {:>9}   {:>8.3}% {:>7}",
+            case.id,
+            case.crash_kind,
+            case.original_size,
+            case.minimized_size,
+            case.stats.reduction_percent,
+            case.stats.minimization_runs
         );
     }
     Ok(())
@@ -318,10 +340,11 @@ fn signal_for(kind: &CrashKind) -> Option<String> {
     }
 }
 
-fn strength_name(strength: FingerprintStrength) -> &'static str {
-    match strength {
-        FingerprintStrength::Diagnostic => "Diagnostic",
-        FingerprintStrength::SignalFallback => "SignalFallback",
+fn confidence_name(confidence: FingerprintConfidence) -> &'static str {
+    match confidence {
+        FingerprintConfidence::High => "High",
+        FingerprintConfidence::Medium => "Medium",
+        FingerprintConfidence::Low => "Low",
     }
 }
 

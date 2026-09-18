@@ -8,16 +8,18 @@ pub enum CrashKind {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FingerprintStrength {
-    Diagnostic,
-    SignalFallback,
+pub enum FingerprintConfidence {
+    High,
+    Medium,
+    Low,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrashObservation {
     pub kind: CrashKind,
     pub normalized_details: String,
-    pub strength: FingerprintStrength,
+    pub stable_frames: Vec<String>,
+    pub confidence: FingerprintConfidence,
 }
 
 pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
@@ -26,14 +28,28 @@ pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
     }
 
     let stderr = String::from_utf8_lossy(&result.stderr);
+    let stable_frames = crate::fingerprint::stable_frame_identities(&stderr);
     if let Some(error_type) = asan_error_type(&stderr) {
+        let normalized_details = crate::fingerprint::normalize_diagnostic(&stderr);
+        let normalized_details = result.signal.map_or(normalized_details.clone(), |number| {
+            format!(
+                "signal={}:{}\n{normalized_details}",
+                signal_name(number),
+                number
+            )
+        });
         return Some(CrashObservation {
             kind: CrashKind::Sanitizer {
                 tool: "AddressSanitizer".into(),
                 error_type,
             },
-            normalized_details: crate::fingerprint::normalize_diagnostic(&stderr),
-            strength: FingerprintStrength::Diagnostic,
+            normalized_details,
+            confidence: if stable_frames.is_empty() {
+                FingerprintConfidence::Low
+            } else {
+                FingerprintConfidence::High
+            },
+            stable_frames,
         });
     }
 
@@ -48,7 +64,12 @@ pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
                 "signal={name}\n{}",
                 crate::fingerprint::normalize_diagnostic(&stderr)
             ),
-            strength: FingerprintStrength::SignalFallback,
+            confidence: if stable_frames.is_empty() {
+                FingerprintConfidence::Low
+            } else {
+                FingerprintConfidence::Medium
+            },
+            stable_frames,
         });
     }
 
@@ -61,7 +82,8 @@ pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
                 "exit={code}\n{}",
                 crate::fingerprint::normalize_diagnostic(&stderr)
             ),
-            strength: FingerprintStrength::SignalFallback,
+            stable_frames,
+            confidence: FingerprintConfidence::Low,
         })
 }
 

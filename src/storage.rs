@@ -180,7 +180,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn exclusive_directory_rename_preserves_an_existing_empty_destination() {
+    fn exclusive_directory_rename_preserves_an_existing_populated_destination() {
         let root = tempdir().unwrap();
         let source = root.path().join("source");
         let destination = root.path().join("destination");
@@ -197,5 +197,22 @@ mod tests {
             fs::read(destination.join("destination.txt")).unwrap(),
             b"destination"
         );
+    }
+
+    #[test]
+    fn exclusive_directory_rename_preserves_an_existing_empty_destination() {
+        let root = tempdir().unwrap();
+        let source = root.path().join("source");
+        let destination = root.path().join("destination");
+        fs::create_dir(&source).unwrap();
+        fs::write(source.join("source.txt"), b"source").unwrap();
+        fs::create_dir(&destination).unwrap();
+
+        let error = rename_directory_no_replace(&source, &destination).unwrap_err();
+
+        assert_eq!(error.kind(), ErrorKind::AlreadyExists);
+        assert_eq!(fs::read(source.join("source.txt")).unwrap(), b"source");
+        assert!(destination.is_dir());
+        assert_eq!(fs::read_dir(&destination).unwrap().count(), 0);
     }
 }

@@ -17,6 +17,8 @@ pub enum FingerprintConfidence {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrashObservation {
     pub kind: CrashKind,
+    /// Process signal reported by the runner, never inferred from diagnostic text.
+    pub observed_signal: Option<i32>,
     pub normalized_details: String,
     pub stable_frames: Vec<String>,
     pub confidence: FingerprintConfidence,
@@ -31,19 +33,13 @@ pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
     let stable_frames = crate::fingerprint::stable_frame_identities(&stderr);
     if let Some(error_type) = asan_error_type(&stderr) {
         let normalized_details = crate::fingerprint::normalize_diagnostic(&stderr);
-        let normalized_details = result.signal.map_or(normalized_details.clone(), |number| {
-            format!(
-                "signal={}:{}\n{normalized_details}",
-                signal_name(number),
-                number
-            )
-        });
         return Some(CrashObservation {
             kind: CrashKind::Sanitizer {
                 tool: "AddressSanitizer".into(),
                 error_type,
             },
             normalized_details,
+            observed_signal: result.signal,
             confidence: if stable_frames.is_empty() {
                 FingerprintConfidence::Low
             } else {
@@ -56,6 +52,7 @@ pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
     if let Some(number) = result.signal {
         let name = signal_name(number).to_string();
         return Some(CrashObservation {
+            observed_signal: result.signal,
             kind: CrashKind::Signal {
                 number,
                 name: name.clone(),
@@ -77,6 +74,7 @@ pub fn classify(result: &ExecutionResult) -> Option<CrashObservation> {
         .exit_code
         .filter(|code| *code != 0)
         .map(|code| CrashObservation {
+            observed_signal: result.signal,
             kind: CrashKind::AbnormalExit { code },
             normalized_details: format!(
                 "exit={code}\n{}",

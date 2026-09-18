@@ -1,6 +1,6 @@
 use crate::crash::{classify, kind_name, CrashKind, FingerprintConfidence};
 use crate::error::{message, CrashForgeError, Result};
-use crate::fingerprint::fingerprint;
+use crate::fingerprint::{fingerprint, legacy_fingerprint};
 use crate::minimizer::{minimize, MinimizerLimits};
 use crate::runner::{run as run_target, RunOptions, Target};
 use crate::storage::{
@@ -305,8 +305,17 @@ fn reproduce_manifest(root: &Path, manifest: &CrashManifest) -> Result<ObservedC
         },
     )?;
     let observation = classify(&result).ok_or_else(|| message("stored case did not fail"))?;
+    let uses_legacy_fingerprint = manifest.fingerprint_confidence.is_none()
+        && matches!(
+            manifest.fingerprint_strength.as_str(),
+            "Diagnostic" | "SignalFallback"
+        );
     Ok(ObservedCrash {
-        fingerprint: fingerprint(&observation),
+        fingerprint: if uses_legacy_fingerprint {
+            legacy_fingerprint(&observation)
+        } else {
+            fingerprint(&observation)
+        },
         description: describe_crash(&observation.kind),
     })
 }

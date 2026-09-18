@@ -1,4 +1,4 @@
-use crate::crash::{CrashKind, CrashObservation};
+use crate::crash::{signal_name, CrashKind, CrashObservation};
 use sha2::{Digest, Sha256};
 
 pub fn fingerprint(observation: &CrashObservation) -> String {
@@ -6,8 +6,8 @@ pub fn fingerprint(observation: &CrashObservation) -> String {
         CrashKind::Signal { number, name } => format!("signal:{name}:{number}"),
         CrashKind::Sanitizer { tool, error_type } => {
             if observation.stable_frames.is_empty() {
-                if let Some(signal) = signal_identity(&observation.normalized_details) {
-                    signal
+                if let Some(number) = observation.observed_signal {
+                    format!("signal:{}:{number}", signal_name(number))
                 } else {
                     format!("sanitizer:{tool}:{error_type}")
                 }
@@ -23,6 +23,21 @@ pub fn fingerprint(observation: &CrashObservation) -> String {
     } else {
         format!("{identity}\n{}", observation.stable_frames.join("\n"))
     };
+    hash_canonical(&canonical)
+}
+
+/// v0.1 identity for verifying manifests written before confidence was recorded.
+/// Keep diagnostic normalization compatible with v0.1 for this path.
+pub fn legacy_fingerprint(observation: &CrashObservation) -> String {
+    let kind = match &observation.kind {
+        CrashKind::Signal { number, name } => format!("signal:{name}:{number}"),
+        CrashKind::Sanitizer { tool, error_type } => format!("sanitizer:{tool}:{error_type}"),
+        CrashKind::AbnormalExit { code } => format!("exit:{code}"),
+    };
+    hash_canonical(&format!("{kind}\n{}", observation.normalized_details))
+}
+
+fn hash_canonical(canonical: &str) -> String {
     let digest = Sha256::digest(canonical.as_bytes());
     let hex = format!("{digest:x}");
     format!("CF-{}", &hex[..8])
@@ -101,29 +116,65 @@ fn stable_frame_identity(line: &str) -> Option<String> {
         return None;
     }
     let frame_number = &line[1..1 + frame_number_len];
-    let mut tokens = line[1 + frame_number_len..].split_whitespace();
-    let mut identity = Vec::new();
-    for token in tokens.by_ref() {
-        let normalized_token = normalize_frame_token(token);
-        if identity.is_empty() && is_instruction_address(&normalized_token) {
-            continue;
+    let mut body = line[1 + frame_number_len..].trim();
+    while let Some(token) = body.split_whitespace().next() {
+        if !is_instruction_address(token.trim_matches(['(', ')', ','])) {
+            break;
         }
-        identity.push(normalized_token);
+        body = body[token.len()..].trim_start();
     }
-    identity.retain(|token| !token.is_empty());
+    let (function, location) = split_frame_location(body);
+    let mut identity = function.split_whitespace().collect::<Vec<_>>().join(" ");
+    if let Some(location) = location {
+        // Normalize the complete location, including spaces, independently of the
+        // function. A slash in a C++ operator is part of the symbol, not a path.
+        let location = location.trim_matches(['(', ')', ',']);
+        let basename = location.rsplit('/').next().unwrap_or(location);
+        let location = strip_line_suffix(basename);
+        if !identity.is_empty() {
+            identity.push(' ');
+        }
+        identity.push_str(&location);
+    }
     if identity.is_empty() {
         None
     } else {
-        Some(format!("frame:{frame_number} {}", identity.join(" ")))
+        Some(format!("frame:{frame_number} {identity}"))
     }
 }
 
-fn signal_identity(details: &str) -> Option<String> {
-    details.lines().find_map(|line| {
-        let line = line.strip_prefix("signal=")?;
-        let identity = line.split_whitespace().next()?;
-        Some(format!("signal:{identity}"))
-    })
+fn split_frame_location(body: &str) -> (&str, Option<&str>) {
+    let mut depth = 0usize;
+    let mut boundary = true;
+    for (index, character) in body.char_indices() {
+        if depth == 0 && boundary {
+            let tail = &body[index..];
+            let path = tail.strip_prefix('(').unwrap_or(tail);
+            if path.starts_with('/') || path.starts_with("./") || path.starts_with("../") {
+                return (body[..index].trim_end(), Some(tail));
+            }
+        }
+        match character {
+            '(' => depth += 1,
+            ')' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+        boundary = character.is_whitespace();
+    }
+    // A relative source location can follow a complete function signature, or
+    // be a final filename:line[:column] field after a bare function name.
+    if strip_line_suffix(body) != body {
+        if let Some(end) = body.rfind(')') {
+            let tail = &body[end + 1..];
+            if tail.starts_with(char::is_whitespace) && !tail.trim().is_empty() {
+                return (body[..=end].trim_end(), Some(tail.trim()));
+            }
+        }
+        if let Some((function, location)) = body.rsplit_once(char::is_whitespace) {
+            return (function.trim_end(), Some(location));
+        }
+    }
+    (body, None)
 }
 
 fn is_instruction_address(token: &str) -> bool {
@@ -135,27 +186,15 @@ fn is_instruction_address(token: &str) -> bool {
     })
 }
 
-fn normalize_frame_token(token: &str) -> String {
-    let mut normalized = token
-        .trim_matches(|character| character == '(' || character == ')' || character == ',')
-        .to_string();
-    if let Some((prefix, suffix)) = normalized.rsplit_once('/') {
-        if !prefix.is_empty() {
-            normalized = suffix.to_string();
-        }
-    }
-    strip_line_suffix(&normalized)
-}
-
 fn strip_line_suffix(token: &str) -> String {
     let Some((prefix, last)) = token.rsplit_once(':') else {
         return token.to_string();
     };
-    if !last.chars().all(|character| character.is_ascii_digit()) {
+    if last.is_empty() || !last.chars().all(|character| character.is_ascii_digit()) {
         return token.to_string();
     }
     if let Some((path, line)) = prefix.rsplit_once(':') {
-        if line.chars().all(|character| character.is_ascii_digit()) {
+        if !line.is_empty() && line.chars().all(|character| character.is_ascii_digit()) {
             return path.to_string();
         }
     }

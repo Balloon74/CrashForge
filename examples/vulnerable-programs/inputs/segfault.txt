@@ -1,0 +1,6 @@
+ordinary input line 1
+ordinary input line 2
+ordinary input line 3
+CRASH
+ordinary input line 4
+

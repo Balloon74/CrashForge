@@ -1,0 +1,4 @@
+ordinary input line 1
+ABORT
+ordinary input line 2
+

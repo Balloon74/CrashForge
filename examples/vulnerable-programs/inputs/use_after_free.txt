@@ -1,0 +1,3 @@
+ordinary input
+USE_AFTER_FREE
+

@@ -1,0 +1,62 @@
+POST /v4/sync/import HTTP/1.1
+Host: sync-gateway.example.invalid
+User-Agent: DeskSync/9.8.1 (macOS; arm64)
+Accept: application/json
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.8
+Authorization: Bearer redacted-test-two-token
+X-Request-ID: 7fa9d8c2-5ef4-4e5b-b8b1-6f5a44e7c201
+X-Workspace: ws_01J8M6SYNCHRONOUS
+X-Client-Build: 9080104
+X-Feature-Flags: delta-sync,legacy-bulk,attachment-index,trace-v3
+Content-Type: application/json; charset=utf-8
+Content-Length: 18342
+
+{
+  "schema":"sync-manifest/4",
+  "request_id":"req_20260917_184221_00091",
+  "workspace":"workspace_7b61d0e1",
+  "device":{"id":"mac_4e2a91","platform":"macos-arm64","version":"14.6.1","timezone":"America/Los_Angeles"},
+  "options":{"dry_run":false,"preserve_ids":true,"include_deleted":true,"include_previews":false,"compression":"identity"},
+  "watermarks":{"server":"srv_0000000000009a41","local":"loc_00000000000081ef","collections":42},
+  "capabilities":["delta-v4","bulk-patch","unicode-v2","attachment-digests","legacy-bridge"],
+  "checksums":{"manifest":"sha256:4e21c0f0e8c65d0f1b7e7d9a0ce7e2b3dcb4f6f4bc3d4cf9c0a8706c1d4d1e20","records":"sha256:8d8c70d0f7786ea4ca0b8d9327de5f1d1fbce8d7b4c55ee6d09c2fd719ae45c1"},
+  "records":[
+    {"id":"rec_100001","collection":"notes","updated":"2026-09-16T08:00:14Z","title":"Capacity planning","labels":["work","planning"],"body":"Review staffing assumptions, dependencies, and release windows before quarterly planning."},
+    {"id":"rec_100002","collection":"notes","updated":"2026-09-16T08:14:19Z","title":"Support handoff","labels":["support","ops"],"body":"Customer reports delayed sync after reconnecting through a captive portal; preserve the diagnostic envelope."},
+    {"id":"rec_100003","collection":"calendar","updated":"2026-09-16T09:04:07Z","title":"Design review","labels":["design","meeting"],"body":"Compare the local import summary against the server audit stream and confirm attachment totals."},
+    {"id":"rec_100004","collection":"attachments","updated":"2026-09-16T10:27:41Z","title":"wireframe-final.pdf","labels":["artifact"],"digest":"sha256:29ed3b1a9dcb46d0c73510eb85e12af28a7b3f9a81a17f9e7c3d2b1a0f8e6d4c"},
+    {"id":"rec_100005","collection":"notes","updated":"2026-09-16T11:36:52Z","title":"Migration checklist","labels":["ops"],"body":"Keep the compatibility bridge enabled until every workspace completes a verified round trip."},
+    {"id":"rec_100006","collection":"notes","updated":"2026-09-16T12:12:03Z","title":"Customer escalation","labels":["priority","support"],"body":"The second export came from an older desktop client and contains mixed line endings and stale clocks."},
+    {"id":"rec_100007","collection":"calendar","updated":"2026-09-16T12:55:26Z","title":"Incident follow-up","labels":["incident"],"body":"Capture the request envelope, selected parser mode, and sanitizer report for engineering review."},
+    {"id":"rec_100008","collection":"notes","updated":"2026-09-16T13:18:37Z","title":"Release notes","labels":["release"],"body":"The importer records a normalized digest and preserves unknown metadata for future round trips."},
+    {"id":"rec_100009","collection":"notes","updated":"2026-09-16T14:06:49Z","title":"Offline edits","labels":["sync"],"body":"Do not discard records whose clocks are behind the local watermark; merge them after validation."},
+    {"id":"rec_100010","collection":"attachments","updated":"2026-09-16T14:44:10Z","title":"screenshot-2026-09-16.png","labels":["artifact"],"digest":"sha256:9c8f6e4d2b1a0077deab45f6c80192a4ff10cd31e7aa0df44bb3c861f5d2e190"},
+    {"id":"rec_100011","collection":"notes","updated":"2026-09-16T15:31:02Z","title":"Parser compatibility","labels":["compatibility"],"body":"Version 5 clients may omit checksums and may use the historical bulk envelope."},
+    {"id":"rec_100012","collection":"notes","updated":"2026-09-16T16:03:33Z","title":"Archive policy","labels":["retention"],"body":"Retain tombstones for 30 days and preserve the original server revision in audit metadata."},
+    {"id":"rec_100013","collection":"calendar","updated":"2026-09-16T16:47:28Z","title":"Import verification","labels":["qa"],"body":"Compare collection totals, content digests, and attachment references after the dry run."},
+    {"id":"rec_100014","collection":"notes","updated":"2026-09-16T17:24:56Z","title":"Locale matrix","labels":["qa","i18n"],"body":"Verify Unicode normalization for names, emoji, composed accents, and right-to-left labels."},
+    {"id":"rec_100015","collection":"notes","updated":"2026-09-16T17:59:44Z","title":"Transport diagnostics","labels":["network"],"body":"The request was retried after a transient 503; the client did not resend a partial body."},
+    {"id":"rec_100016","collection":"attachments","updated":"2026-09-16T18:10:05Z","title":"trace-summary.json","labels":["diagnostic"],"digest":"sha256:4e21a09fdab8c72f6e3a1d8b5c09e7f2a4d6b8c0e1f3a5d7c9b2e4f6a8d0c1b3"},
+    {"id":"rec_100017","collection":"notes","updated":"2026-09-16T18:21:18Z","title":"Importer mode","labels":["compatibility"],"body":"The server selected compatibility mode because the client advertised legacy-bridge."},
+    {"id":"rec_100018","collection":"notes","updated":"2026-09-16T18:29:43Z","title":"Operator note","labels":["ops"],"body":"No manual edits were made after capture; credentials are redacted and unrelated metadata is retained."},
+    {"id":"rec_100019","collection":"calendar","updated":"2026-09-16T18:34:22Z","title":"Post-import review","labels":["meeting"],"body":"Schedule a review with storage, sync, and platform owners after the case is minimized."},
+    {"id":"rec_100020","collection":"notes","updated":"2026-09-16T18:39:08Z","title":"Historical transport","labels":["compatibility"],"body":"The legacy bridge preserves opaque fields and forwards unknown separators without rewriting them."},
+    {"id":"rec_100021","collection":"notes","updated":"2026-09-16T18:39:09Z","title":"Trailing noise","labels":["diagnostic"],"body":"Unexpected whitespace, reordered keys, escaped separators, stale checksums, and trace spans follow the patch."},
+    {"id":"rec_100022","collection":"notes","updated":"2026-09-16T18:39:10Z","title":"Trailing noise 2","labels":["diagnostic"],"body":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee 0123456789 abcdefghijklmnopqrstuvwxyz !@#$%^&*() []{}<>"},
+    {"id":"rec_100023","collection":"notes","updated":"2026-09-16T18:39:11Z","title":"Trailing noise 3","labels":["diagnostic"],"body":"The final records intentionally make this captured request much larger than the compatibility marker."},
+    {"id":"rec_100024","collection":"notes","updated":"2026-09-16T18:39:12Z","title":"Trailing noise 4","labels":["diagnostic"],"body":"cache-control=no-store; retry-after=0; x-debug-sampling=0.125; x-origin=desktop; x-route=legacy-import"},
+    {"id":"rec_100025","collection":"notes","updated":"2026-09-16T18:39:13Z","title":"Trailing noise 5","labels":["diagnostic"],"body":"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}
+  ],
+  "patches":[
+    {"operation":"upsert","collection":"notes","id":"rec_100026","fields":{"title":"Compatibility bridge","body":"The historical decoder is selected only for old bulk-patch envelopes."}},
+    {"operation":"delete","collection":"notes","id":"rec_099901","reason":"server-tombstone"},
+    {"operation":"move","collection":"attachments","id":"rec_099902","folder":"archive/2026/09"},
+    {"operation":"metadata","collection":"notes","id":"rec_099903","fields":{"reviewed":false,"source":"offline"}}
+  ],
+  "bulk_patch":{"schema_version":2,"mode":"legacy-bulk-patch","marker":"CF_TRIGGER_BULK_PATCH_V2","payload":"legacy-record-header|field-map=17|source=desktop-bridge|opaque=8b7e6a5d4c3b2a190817161514131211|padding=retain-for-compatibility|checksum=stale"},
+  "telemetry":{"trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","span_id":"00f067aa0ba902b7","sampled":true,"events":["request_received","manifest_parsed","legacy_mode_selected","patch_queue_built"]},
+  "client_extensions":{"calendar":{"version":"3.1","cursor":"cal_9182"},"notes":{"version":"8.4","cursor":"note_7712"},"files":{"version":"5.0","cursor":"file_1138"}},
+  "server_hints":{"max_batch":128,"retry_budget":3,"preserve_unknown_fields":true,"reconcile_clock_skew":true},
+  "audit":{"captured_at":"2026-09-17T18:42:21.027Z","operator":"validation-fixture","redactions":["authorization"],"source":"offline-real-world-replay"}
+}

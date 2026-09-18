@@ -1,0 +1,5 @@
+reproduce_runs=25
+reproduce_successes=20
+reproduce_target_gate_failures=5
+reproduce_fingerprint_mismatches=0
+reproduce_success_rate=80.0%

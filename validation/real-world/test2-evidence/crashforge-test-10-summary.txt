@@ -1,0 +1,14 @@
+01 PASS command
+02 PASS command
+03 PASS command
+04 PASS command
+05 PASS command
+06 PASS command
+07 PASS command
+08 PASS command
+09 FAIL command
+10 PASS command
+
+crashforge_test_runs=10
+crashforge_test_command_passes=9
+crashforge_test_command_failures=1

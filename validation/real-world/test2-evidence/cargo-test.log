@@ -1,0 +1,95 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (target/debug/deps/crashforge-d8f9205113ddec15)
+
+running 2 tests
+test storage::tests::exclusive_directory_rename_preserves_an_existing_empty_destination ... ok
+test storage::tests::exclusive_directory_rename_preserves_an_existing_populated_destination ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/crashforge-3a7a88343dee7991)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/asan_tests.rs (target/debug/deps/asan_tests-79a81afbb66c08d7)
+
+running 4 tests
+test asan_capability_probe_is_independent_of_fixture_compilation_errors ... ok
+test examples_asan_target_builds_sanitizer_fixtures ... ok
+test adversarial_fixtures_crash_only_for_the_documented_byte_relationships ... ok
+test asan_observations_are_high_confidence_and_stable_across_runs ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+
+     Running tests/cli_tests.rs (target/debug/deps/cli_tests-856016979c411dd9)
+
+running 4 tests
+test help_lists_the_required_commands ... ok
+test rejects_a_target_that_does_not_fail ... ok
+test reproduces_v0_1_signal_cases_and_selects_the_algorithm_from_manifest_metadata ... ok
+test runs_minimizes_stores_and_reproduces_a_c_crash ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+
+     Running tests/fingerprint_tests.rs (target/debug/deps/fingerprint_tests-7e22c1083187ccd9)
+
+running 17 tests
+test distinguishes_different_signals ... ok
+test legacy_fingerprints_match_v0_1_golden_ids_for_each_crash_kind ... ok
+test frameless_asan_uses_the_observed_signal_even_if_details_are_replaced ... ok
+test different_stable_frame_sequences_have_different_fingerprints ... ok
+test relative_source_paths_with_spaces_do_not_change_the_fingerprint ... ok
+test punctuation_adjacent_instruction_addresses_are_ignored ... ok
+test asan_type_and_stable_frames_are_high_confidence_and_address_independent ... ok
+test relative_module_function_qualifiers_remain_part_of_the_identity ... ok
+test normalizes_addresses_in_asan_fingerprints ... ok
+test frameless_asan_without_a_signal_ignores_signal_prose ... ok
+test sanitizer_details_retain_the_v0_1_normalization_without_a_synthetic_signal_prefix ... ok
+test same_signal_with_stable_frames_is_medium_and_prose_independent ... ok
+test signal_only_is_low_and_ignores_stderr ... ok
+test relocated_source_and_module_paths_with_spaces_have_stable_identities ... ok
+test sanitizer_without_stable_frames_uses_signal_as_low_confidence_identity ... ok
+test stable_frames_preserve_complete_distinct_cpp_operator_symbols ... ok
+test stable_frames_beyond_the_first_thirty_two_still_affect_fingerprint ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/minimizer_tests.rs (target/debug/deps/minimizer_tests-8f9a866cbfe8440e)
+
+running 8 tests
+test reduces_to_the_smallest_line_preserving_the_predicate ... ok
+test changing_outcomes_preserve_deterministic_candidates_results_and_budget ... ok
+test preserves_embedded_nul_bytes ... ok
+test preserves_ordered_bytes_at_a_required_offset ... ok
+test preserves_multiple_required_lines ... ok
+test observes_the_execution_budget ... ok
+test reports_elapsed_time_and_preserves_a_required_prefix_and_suffix ... ok
+test minimizes_a_large_input_to_its_required_region ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/runner_tests.rs (target/debug/deps/runner_tests-b98e6aed0668048f)
+
+running 3 tests
+test captures_output_and_exit_code ... ok
+test kills_a_timed_out_process ... ok
+test decodes_a_signal_from_a_native_target ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/storage_tests.rs (target/debug/deps/storage_tests-e62ed4f1fbc9a58f)
+
+running 2 tests
+test deserializes_v0_1_manifest_with_default_statistics_and_confidence ... ok
+test saves_and_loads_a_case_without_overwriting_it ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests crashforge
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

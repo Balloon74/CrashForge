@@ -1,0 +1,8 @@
+Reproducing CF-e3a0425b...
+
+Expected: sanitizer
+Observed: AddressSanitizer: heap-buffer-overflow
+
+Fingerprint match.
+
+Crash reproduced successfully.

@@ -1,0 +1,4 @@
+minimized_direct_runs=100
+minimized_direct_crashes=78
+minimized_direct_misses=22
+minimized_direct_rate=78.0%

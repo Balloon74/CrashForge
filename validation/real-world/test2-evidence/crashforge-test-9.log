@@ -1,0 +1,9 @@
+CrashForge Regression Tests
+
+CF-d4e942ab    PASS
+CF-e3a0425b    FAIL (stored case did not fail)
+
+2 historical crashes
+1 reproduced
+1 regression
+CrashForge error: one or more regression cases failed

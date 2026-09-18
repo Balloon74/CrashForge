@@ -1,0 +1,9 @@
+CrashForge 0.2
+
+✓ Crash detected: AddressSanitizer: heap-buffer-overflow
+Fingerprint: CF-e3a0425b
+  Confidence: High
+→ Minimizing
+  8487 B → 99 B · 437 executions · 6175 ms · 98.834% reduction
+Verified: ✓ CF-e3a0425b
+Saved: ✓ /Users/mouryakummithi/CrashForge - GH opensource/.crashforge/crashes/CF-e3a0425b

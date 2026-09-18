@@ -1,3 +1,6 @@
+use std::ops::Range;
+use std::time::{Duration, Instant};
+
 #[derive(Clone, Copy, Debug)]
 pub struct MinimizerLimits {
     pub max_runs: usize,
@@ -8,6 +11,7 @@ pub struct MinimizationResult {
     pub bytes: Vec<u8>,
     pub runs: usize,
     pub complete: bool,
+    pub elapsed: Duration,
 }
 
 pub fn minimize<F>(
@@ -18,6 +22,7 @@ pub fn minimize<F>(
 where
     F: FnMut(&[u8]) -> bool,
 {
+    let started = Instant::now();
     let mut runs = 0;
     let mut complete = true;
     let initial_units = if input.contains(&b'\n') {
@@ -39,6 +44,7 @@ where
             bytes: flatten(&line_units),
             runs,
             complete: false,
+            elapsed: started.elapsed(),
         };
     }
 
@@ -54,6 +60,7 @@ where
         bytes: flatten(&byte_units),
         runs,
         complete,
+        elapsed: started.elapsed(),
     }
 }
 
@@ -124,23 +131,22 @@ fn split_lines(input: &[u8]) -> Vec<Vec<u8>> {
     lines
 }
 
-fn split_groups(length: usize, groups: usize) -> Vec<Vec<usize>> {
+fn split_groups(length: usize, groups: usize) -> Vec<Range<usize>> {
     (0..groups)
         .map(|group| {
             let start = group * length / groups;
             let end = (group + 1) * length / groups;
-            (start..end).collect()
+            start..end
         })
-        .filter(|group: &Vec<usize>| !group.is_empty())
+        .filter(|group| !group.is_empty())
         .collect()
 }
 
-fn without_group(units: &[Vec<u8>], group: &[usize]) -> Vec<Vec<u8>> {
-    units
+fn without_group(units: &[Vec<u8>], group: &Range<usize>) -> Vec<Vec<u8>> {
+    units[..group.start]
         .iter()
-        .enumerate()
-        .filter(|(index, _)| !group.contains(index))
-        .map(|(_, unit)| unit.clone())
+        .chain(units[group.end..].iter())
+        .cloned()
         .collect()
 }
 

@@ -4,7 +4,7 @@ CrashForge turns software crashes into permanent, minimal, reproducible regressi
 
 ## Status
 
-Version 0.1 targets C and C++ command-line programs on Linux and macOS. The v0.1 workflow accepts an input file as the target's only argument:
+Version 0.2.0 targets C and C++ command-line programs on Linux and macOS. The workflow accepts an input file as the target's only argument:
 
 ```bash
 crashforge run ./parser bad.json
@@ -14,7 +14,7 @@ crashforge inspect CF-a82f091c
 crashforge list
 ```
 
-CrashForge fingerprints sanitizer diagnostics when available and falls back to signal identity for unsanitized programs. Candidate inputs are minimized with deterministic delta debugging and stored below `.crashforge/crashes/`.
+CrashForge reports fingerprint confidence using stable sanitizer and stack-frame identities, with a signal-only fallback when frames are unavailable. Candidate inputs are minimized with deterministic delta debugging, with execution and timing statistics recorded in atomically published cases below `.crashforge/crashes/`. Existing v0.1 manifests remain readable and reproducible using their original fingerprint algorithm.
 
 ## Development
 
@@ -24,4 +24,3 @@ make demo
 ```
 
 Rust stable and a POSIX C compiler are required.
-

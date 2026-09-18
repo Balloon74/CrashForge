@@ -289,6 +289,53 @@ fn relocated_source_and_module_paths_with_spaces_have_stable_identities() {
 }
 
 #[test]
+fn relative_source_paths_with_spaces_do_not_change_the_fingerprint() {
+    let first = classify(&result(
+        b"#0 0x1234 in parse build one/src/parser file.cpp:42:7\n",
+        Some(11),
+        None,
+    ))
+    .unwrap();
+    let second = classify(&result(
+        b"#0 0xabcd in parse checkout two/src/parser file.cpp:90:2\n",
+        Some(11),
+        None,
+    ))
+    .unwrap();
+
+    assert_eq!(fingerprint(&first), fingerprint(&second));
+    assert_eq!(first.stable_frames, ["frame:0 in parse parser file.cpp"]);
+}
+
+#[test]
+fn relative_module_function_qualifiers_remain_part_of_the_identity() {
+    let observe = |qualifier: &str| {
+        classify(&result(
+            format!("#0 0x1234 in {qualifier} source tree/parser.cpp:42:7\n").as_bytes(),
+            Some(11),
+            None,
+        ))
+        .unwrap()
+    };
+
+    let frontend = observe("./frontend/parse");
+    let backend = observe("./backend/parse");
+    let relocated_frontend = classify(&result(
+        b"#0 0xabcd in ./frontend/parse checkout tree/parser.cpp:90:2\n",
+        Some(11),
+        None,
+    ))
+    .unwrap();
+
+    assert_eq!(fingerprint(&frontend), fingerprint(&relocated_frontend));
+    assert_ne!(fingerprint(&frontend), fingerprint(&backend));
+    assert_eq!(
+        frontend.stable_frames,
+        ["frame:0 in ./frontend/parse parser.cpp"]
+    );
+}
+
+#[test]
 fn legacy_fingerprints_match_v0_1_golden_ids_for_each_crash_kind() {
     // SHA-256 vectors derived from v0.1 (b495ae1), not from the helper under test.
     for (stderr, signal, exit_code, expected) in [

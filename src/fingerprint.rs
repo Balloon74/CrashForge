@@ -144,6 +144,16 @@ fn stable_frame_identity(line: &str) -> Option<String> {
 }
 
 fn split_frame_location(body: &str) -> (&str, Option<&str>) {
+    if let Some(function_body) = body.strip_prefix("in ") {
+        let function_end = function_end(function_body);
+        if function_end < function_body.len() {
+            let function = &body[..3 + function_end];
+            let location = function_body[function_end..].trim_start();
+            return (function, (!location.is_empty()).then_some(location));
+        }
+        return (body, None);
+    }
+
     let mut depth = 0usize;
     let mut boundary = true;
     for (index, character) in body.char_indices() {
@@ -175,6 +185,29 @@ fn split_frame_location(body: &str) -> (&str, Option<&str>) {
         }
     }
     (body, None)
+}
+
+fn function_end(function_body: &str) -> usize {
+    let Some(open) = function_body.find('(') else {
+        return function_body
+            .find(char::is_whitespace)
+            .unwrap_or(function_body.len());
+    };
+
+    let mut depth = 0usize;
+    for (index, character) in function_body[open..].char_indices() {
+        match character {
+            '(' => depth += 1,
+            ')' => {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return open + index + character.len_utf8();
+                }
+            }
+            _ => {}
+        }
+    }
+    function_body.len()
 }
 
 fn is_instruction_address(token: &str) -> bool {

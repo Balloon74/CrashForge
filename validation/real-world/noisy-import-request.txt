@@ -1,0 +1,75 @@
+POST /api/v3/import HTTP/1.1
+Host: ingest.example.invalid
+User-Agent: AcmeSync/7.14.2 (Darwin; arm64)
+Accept: application/json, application/problem+json
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.8
+Authorization: Bearer redacted-validation-token
+X-Request-ID: 4d8c7f6a-8b0e-4f3b-91c8-0b16a23b0a77
+X-Client-Session: 2026-09-17T18:42:11.027Z/9b42c7
+X-Retry-Count: 0
+X-Feature-Flags: compact-v2,legacy-import,strict-schema,trace-sampling
+Content-Type: multipart/form-data; boundary=----AcmeBoundary7f2a
+Content-Encoding: identity
+Content-Length: 6127
+
+------AcmeBoundary7f2a
+Content-Disposition: form-data; name="manifest"
+Content-Type: application/json; charset=utf-8
+
+{
+  "schema": "acme.import/3.2",
+  "source": "desktop-sync",
+  "workspace": "ws_01HZX5P2J9N5R6V8G0T2C4D6E8",
+  "exported_at": "2026-09-17T18:42:10.991Z",
+  "locale": "en-US",
+  "timezone": "America/Los_Angeles",
+  "options": {
+    "preserve_ids": true,
+    "include_deleted": false,
+    "include_previews": true,
+    "compression": "none"
+  },
+  "client": {
+    "name": "AcmeSync",
+    "version": "7.14.2",
+    "build": "7140201",
+    "platform": "macos-arm64",
+    "plugins": ["calendar", "notes", "attachments", "legacy-bridge"]
+  },
+  "stats": {
+    "collections": 18,
+    "records": 247,
+    "attachments": 36,
+    "bytes": 502918,
+    "checksum": "sha256:6a4cf7d5e8c10a4e31f93cbccfe8b2e949e7adf2f7dd9a0ac4f0e9a0d776c2a1"
+  }
+}
+------AcmeBoundary7f2a
+Content-Disposition: form-data; name="records"
+Content-Type: application/x-ndjson
+
+{"id":"rec_000001","collection":"notes","updated":"2026-09-15T08:01:14Z","title":"Quarterly planning","labels":["work","planning"],"body":"Review capacity, dependencies, and customer feedback before the next release window."}
+{"id":"rec_000002","collection":"notes","updated":"2026-09-15T08:11:19Z","title":"Field report","labels":["support"],"body":"Several clients reported delayed synchronization after reconnecting from a captive network."}
+{"id":"rec_000003","collection":"calendar","updated":"2026-09-15T09:04:07Z","title":"Design review","labels":["design","meeting"],"body":"Compare the import summary against the server-side audit log and confirm attachment counts."}
+{"id":"rec_000004","collection":"attachments","updated":"2026-09-15T10:27:41Z","title":"wireframe-final.pdf","labels":["artifact"],"body":"sha256:29ed3b1a9dcb46d0c73510eb85e12af28a7b3f9a81a17f9e7c3d2b1a0f8e6d4c"}
+{"id":"rec_000005","collection":"notes","updated":"2026-09-15T11:36:52Z","title":"Migration checklist","labels":["ops"],"body":"Keep the old importer enabled until the final verification run completes on every workspace."}
+{"id":"rec_000006","collection":"notes","updated":"2026-09-15T12:12:03Z","title":"Customer escalation","labels":["priority","support"],"body":"The customer supplied a second export with an older desktop client and mixed line endings."}
+{"id":"rec_000007","collection":"calendar","updated":"2026-09-15T12:55:26Z","title":"Incident follow-up","labels":["incident"],"body":"Capture the exact request envelope, parser mode, and sanitizer report for the engineering handoff."}
+{"id":"rec_000008","collection":"notes","updated":"2026-09-15T13:18:37Z","title":"Release notes","labels":["release"],"body":"The importer now records a normalized content digest and keeps unknown metadata for round trips."}
+{"id":"rec_000009","collection":"notes","updated":"2026-09-15T14:06:49Z","title":"Offline edits","labels":["sync"],"body":"Do not discard records whose clocks are behind the local watermark; merge them after validation."}
+{"id":"rec_000010","collection":"attachments","updated":"2026-09-15T14:44:10Z","title":"screenshot-2026-09-15.png","labels":["artifact"],"body":"sha256:9c8f6e4d2b1a0077deab45f6c80192a4ff10cd31e7aa0df44bb3c861f5d2e190"}
+{"id":"rec_000011","collection":"notes","updated":"2026-09-15T15:31:02Z","title":"Parser compatibility","labels":["compatibility"],"body":"Inputs from version 5 may omit the checksum field and may use a legacy envelope."}
+{"id":"rec_000012","collection":"notes","updated":"2026-09-15T16:03:33Z","title":"Archive policy","labels":["retention"],"body":"Retain tombstones for 30 days and preserve the original server revision in audit metadata."}
+{"id":"rec_000013","collection":"calendar","updated":"2026-09-15T16:47:28Z","title":"Import verification","labels":["qa"],"body":"Compare collection totals, content digests, and attachment references after the dry run."}
+{"id":"rec_000014","collection":"notes","updated":"2026-09-15T17:24:56Z","title":"Locale matrix","labels":["qa","i18n"],"body":"Verify Unicode normalization for names, emoji, composed accents, and right-to-left labels."}
+{"id":"rec_000015","collection":"notes","updated":"2026-09-15T17:59:44Z","title":"Transport diagnostics","labels":["network"],"body":"The request was retried after a transient 503; the client did not resend a partial body."}
+{"id":"rec_000016","collection":"attachments","updated":"2026-09-15T18:10:05Z","title":"trace-summary.json","labels":["diagnostic"],"body":"sha256:4e21a09fdab8c72f6e3a1d8b5c09e7f2a4d6b8c0e1f3a5d7c9b2e4f6a8d0c1b3"}
+{"id":"rec_000017","collection":"notes","updated":"2026-09-15T18:21:18Z","title":"Importer mode","labels":["compatibility"],"body":"The server selected compatibility mode because the client advertised legacy-bridge."}
+{"id":"rec_000018","collection":"notes","updated":"2026-09-15T18:29:43Z","title":"Operator note","labels":["ops"],"body":"No manual edits were made to the request after capture; redactions are limited to credentials."}
+{"id":"rec_000019","collection":"calendar","updated":"2026-09-15T18:34:22Z","title":"Post-import review","labels":["meeting"],"body":"Schedule a review with storage, sync, and client-platform owners after the case is minimized."}
+{"id":"rec_000020","collection":"notes","updated":"2026-09-15T18:39:06Z","title":"Legacy envelope marker","labels":["compatibility"],"body":"CF_TRIGGER_LEGACY_IMPORT; preserve this opaque field while decoding the historical record envelope."}
+{"id":"rec_000021","collection":"notes","updated":"2026-09-15T18:39:07Z","title":"Trailing noise","labels":["diagnostic"],"body":"Unexpected whitespace, reordered keys, escaped separators, and a stale client checksum follow the marker."}
+{"id":"rec_000022","collection":"notes","updated":"2026-09-15T18:39:08Z","title":"Trailing noise 2","labels":["diagnostic"],"body":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee 0123456789 abcdefghijklmnopqrstuvwxyz !@#$%^&*()"}
+{"id":"rec_000023","collection":"notes","updated":"2026-09-15T18:39:09Z","title":"Trailing noise 3","labels":["diagnostic"],"body":"The final records intentionally make this captured request much larger than the trigger token."}
+------AcmeBoundary7f2a--

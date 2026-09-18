@@ -1,0 +1,20 @@
+{
+  "id": "CF-3c33aad7",
+  "signal": null,
+  "crash_kind": "sanitizer",
+  "fingerprint_strength": "High",
+  "original_size": 6725,
+  "minimized_size": 24,
+  "stats": {
+    "original_size": 6725,
+    "minimized_size": 24,
+    "reduction_percent": 99.64312267657992,
+    "minimization_runs": 95,
+    "minimization_ms": 1608
+  },
+  "fingerprint_confidence": "High",
+  "program": "/Users/mouryakummithi/CrashForge - GH opensource/validation/real-world/bin/asan_import_parser",
+  "working_directory": "/Users/mouryakummithi/CrashForge - GH opensource/validation/real-world/session",
+  "timeout_ms": 5000,
+  "status": "active"
+}

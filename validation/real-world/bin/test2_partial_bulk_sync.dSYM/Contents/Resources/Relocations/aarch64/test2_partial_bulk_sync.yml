@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     'validation/real-world/bin/test2_partial_bulk_sync'
+relocations:     []
+...

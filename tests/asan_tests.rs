@@ -1,6 +1,7 @@
 use crashforge::crash::{classify, FingerprintConfidence};
 use crashforge::fingerprint::fingerprint;
 use crashforge::runner::{run, RunOptions, Target};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::time::Duration;
@@ -44,7 +45,11 @@ fn run_fixture(
     .unwrap()
 }
 
-fn assert_asan_supported(output: &Output) -> bool {
+fn asan_supported(directory: &Path) -> bool {
+    let source = directory.join("asan-capability-probe.c");
+    let program = directory.join("asan-capability-probe");
+    fs::write(&source, "int main(void) { return 0; }\n").unwrap();
+    let output = compile(&source, &program, true);
     if output.status.success() {
         true
     } else {
@@ -56,10 +61,50 @@ fn assert_asan_supported(output: &Output) -> bool {
     }
 }
 
+fn assert_fixture_compiled(fixture: &str, output: &Output) {
+    assert!(
+        output.status.success(),
+        "{fixture} did not compile with AddressSanitizer:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn asan_capability_probe_is_independent_of_fixture_compilation_errors() {
+    let directory = tempdir().unwrap();
+    let invalid_fixture = directory.path().join("invalid-fixture.c");
+    fs::write(&invalid_fixture, "#error simulated fixture failure\n").unwrap();
+    let fixture_output = compile(
+        &invalid_fixture,
+        &directory.path().join("invalid-fixture"),
+        true,
+    );
+    assert!(!fixture_output.status.success());
+
+    let valid_probe = directory.path().join("valid-probe.c");
+    fs::write(&valid_probe, "int main(void) { return 0; }\n").unwrap();
+    let probe_output = compile(&valid_probe, &directory.path().join("valid-probe"), true);
+    if !probe_output.status.success() {
+        eprintln!(
+            "SKIP: cc rejected -fsanitize=address; AddressSanitizer coverage is unavailable on this toolchain:\n{}",
+            String::from_utf8_lossy(&probe_output.stderr)
+        );
+        return;
+    }
+
+    assert!(
+        asan_supported(directory.path()),
+        "a fixture compilation error must not make AddressSanitizer coverage skip"
+    );
+}
+
 #[test]
 fn asan_observations_are_high_confidence_and_stable_across_runs() {
     let repository = repository();
     let directory = tempdir().unwrap();
+    if !asan_supported(directory.path()) {
+        return;
+    }
     let fixtures = [
         ("buffer_overflow", "buffer_overflow.txt"),
         ("use_after_free", "use_after_free.txt"),
@@ -71,9 +116,7 @@ fn asan_observations_are_high_confidence_and_stable_across_runs() {
             .join(format!("{fixture}.c"));
         let program = directory.path().join(fixture);
         let compilation = compile(&source, &program, true);
-        if !assert_asan_supported(&compilation) {
-            return;
-        }
+        assert_fixture_compiled(fixture, &compilation);
 
         let input = repository
             .join("examples/vulnerable-programs/inputs")
@@ -102,13 +145,20 @@ fn asan_observations_are_high_confidence_and_stable_across_runs() {
 fn examples_asan_target_builds_sanitizer_fixtures() {
     let repository = repository();
     let directory = tempdir().unwrap();
-    let probe = compile(
-        &repository.join("examples/vulnerable-programs/buffer_overflow.c"),
-        &directory.path().join("asan-probe"),
-        true,
-    );
-    if !assert_asan_supported(&probe) {
+    if !asan_supported(directory.path()) {
         return;
+    }
+
+    let programs = [
+        repository.join("target/examples-asan/buffer_overflow"),
+        repository.join("target/examples-asan/use_after_free"),
+    ];
+    for program in &programs {
+        match fs::remove_file(program) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => panic!("could not remove {}: {error}", program.display()),
+        }
     }
 
     let build = Command::new("make")
@@ -121,12 +171,13 @@ fn examples_asan_target_builds_sanitizer_fixtures() {
         "make examples-asan failed:\n{}",
         String::from_utf8_lossy(&build.stderr)
     );
-    assert!(repository
-        .join("target/examples-asan/buffer_overflow")
-        .is_file());
-    assert!(repository
-        .join("target/examples-asan/use_after_free")
-        .is_file());
+    for program in programs {
+        assert!(
+            program.is_file(),
+            "make examples-asan did not create {}",
+            program.display()
+        );
+    }
 }
 
 #[test]

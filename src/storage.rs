@@ -4,7 +4,16 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::Builder;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct MinimizationStats {
+    pub original_size: usize,
+    pub minimized_size: usize,
+    pub reduction_percent: f64,
+    pub minimization_runs: usize,
+    pub minimization_ms: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct CrashManifest {
     pub id: String,
     pub signal: Option<String>,
@@ -12,6 +21,10 @@ pub struct CrashManifest {
     pub fingerprint_strength: String,
     pub original_size: usize,
     pub minimized_size: usize,
+    #[serde(default)]
+    pub stats: MinimizationStats,
+    #[serde(default)]
+    pub fingerprint_confidence: Option<String>,
     pub program: PathBuf,
     pub working_directory: PathBuf,
     pub timeout_ms: u64,
@@ -47,21 +60,14 @@ pub fn save_case(
     }
 
     let destination = crashes.join(&manifest.id);
-    match fs::create_dir(&destination) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+    if destination.exists() {
+        return Err(CrashForgeError::Collision(destination));
+    }
+    if let Err(error) = fs::rename(temporary.path(), &destination) {
+        if error.kind() == std::io::ErrorKind::AlreadyExists {
             return Err(CrashForgeError::Collision(destination));
         }
-        Err(error) => return Err(error.into()),
-    }
-
-    for filename in [
-        "original.txt",
-        "minimized.txt",
-        "crash.json",
-        "reproduce.sh",
-    ] {
-        fs::rename(temporary.path().join(filename), destination.join(filename))?;
+        return Err(error.into());
     }
 
     Ok(destination)

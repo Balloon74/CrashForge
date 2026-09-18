@@ -3,7 +3,7 @@ use crate::error::{message, CrashForgeError, Result};
 use crate::fingerprint::fingerprint;
 use crate::minimizer::{minimize, MinimizerLimits};
 use crate::runner::{run as run_target, RunOptions, Target};
-use crate::storage::{case_directory, list_cases, load_case, save_case, CrashManifest};
+use crate::storage::{case_directory, list_cases, load_case, save_case, CrashManifest, MinimizationStats};
 use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -159,6 +159,19 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
         fingerprint_strength: strength_name(baseline_observation.strength).into(),
         original_size: original.len(),
         minimized_size: result.bytes.len(),
+        stats: MinimizationStats {
+            original_size: original.len(),
+            minimized_size: result.bytes.len(),
+            reduction_percent: if original.is_empty() {
+                0.0
+            } else {
+                (original.len().saturating_sub(result.bytes.len()) as f64 / original.len() as f64)
+                    * 100.0
+            },
+            minimization_runs: result.runs,
+            minimization_ms: result.elapsed.as_millis().try_into().unwrap_or(u64::MAX),
+        },
+        fingerprint_confidence: Some(format!("{:?}", baseline_observation.confidence)),
         program: candidate_target.program,
         working_directory,
         timeout_ms,

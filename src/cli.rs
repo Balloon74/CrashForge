@@ -178,7 +178,7 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
             stats.minimization_runs
         );
     }
-    println!("✓ Verified: {baseline_fingerprint}");
+    println!("Verified: ✓ {baseline_fingerprint}");
 
     let manifest = CrashManifest {
         id: baseline_fingerprint,
@@ -196,7 +196,7 @@ fn run_command(program: PathBuf, input: PathBuf, timeout_ms: u64, max_runs: usiz
     };
     let root = storage_root()?;
     match save_case(&root, &manifest, &original, &result.bytes) {
-        Ok(path) => println!("✓ Saved: {}", path.display()),
+        Ok(path) => println!("Saved: ✓ {}", path.display()),
         Err(CrashForgeError::Collision(path)) => {
             println!("Already stored: {}", path.display())
         }

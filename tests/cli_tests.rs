@@ -59,6 +59,12 @@ fn runs_minimizes_stores_and_reproduces_a_c_crash() {
             "missing {marker} in output: {output}"
         );
     }
+    for marker in ["Verified:", "Saved:"] {
+        assert!(
+            output.lines().any(|line| line.starts_with(marker)),
+            "missing marker-first {marker} line in output: {output}"
+        );
+    }
     let id = output
         .lines()
         .find_map(|line| line.strip_prefix("Fingerprint: "))
